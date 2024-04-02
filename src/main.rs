@@ -7,15 +7,9 @@ use es8311::{Config, Resolution, SampleFreq};
 use esp_backtrace as _;
 use esp_println::println;
 use hal::{
-    clock::ClockControl,
-    dma::{Dma, DmaPriority},
-    dma_circular_buffers,
-    i2c::I2C,
-    i2s::{DataFormat, I2s, I2sWriteDma, Standard},
-    peripherals::Peripherals,
-    prelude::*,
-    IO,
+    clock::ClockControl, dma::{Dma, DmaPriority}, dma_circular_buffers, gpio::IO, i2c::I2C, i2s::{DataFormat, I2s, I2sWriteDma, Standard}, peripherals::Peripherals, prelude::*
 };
+use embedded_hal::digital::OutputPin;
 
 const SAMPLE: &[u8] = include_bytes!("../sample.raw");
 
@@ -74,7 +68,7 @@ fn main() -> ! {
         &clocks,
     );
 
-    let i2s_tx = i2s
+    let mut i2s_tx = i2s
         .i2s_tx
         .with_bclk(io.pins.gpio17)
         .with_ws(io.pins.gpio47)
@@ -83,14 +77,14 @@ fn main() -> ! {
 
     let data = SAMPLE;
 
-    let buffer = tx_buffer;
+    let mut buffer = tx_buffer;
     let mut idx = 0;
     for i in 0..usize::min(data.len(), buffer.len()) {
         buffer[i] = data[idx];
         idx = (idx + 1) % data.len();
     }
 
-    let mut transfer = i2s_tx.write_dma_circular(buffer).unwrap();
+    let mut transfer = i2s_tx.write_dma_circular(&mut buffer).unwrap();
     loop {
         if transfer.available() > 0 {
             transfer
