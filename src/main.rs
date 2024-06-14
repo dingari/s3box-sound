@@ -3,25 +3,28 @@
 #![no_std]
 #![no_main]
 
+use embassy_executor::Spawner;
+
 use es8311::{Config, Resolution, SampleFreq};
 use esp_backtrace as _;
-use esp_println::println;
-use hal::{
+use esp_hal::i2s::asynch::I2sWriteDmaAsync;
+use esp_hal::{
     clock::ClockControl,
     dma::{Dma, DmaPriority},
     dma_circular_buffers,
     gpio::{Io, Level, Output},
     i2c::I2C,
-    i2s::{DataFormat, I2s, I2sWriteDma, Standard},
+    i2s::{DataFormat, I2s, Standard},
     peripherals::Peripherals,
     prelude::*,
     system::SystemControl,
 };
+use esp_println::println;
 
 const SAMPLE: &[u8] = include_bytes!("../sample.raw");
 
-#[entry]
-fn main() -> ! {
+#[main]
+async fn main(_spawner: Spawner) {
     let peripherals = Peripherals::take();
     let system = SystemControl::new(peripherals.SYSTEM);
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
@@ -51,7 +54,7 @@ fn main() -> ! {
         sclk_inverted: true,
     };
 
-    let delay = hal::delay::Delay::new(&clocks);
+    let delay = esp_hal::delay::Delay::new(&clocks);
     es8311.init(delay, &cfg).unwrap();
     println!("init done");
     es8311.voice_mute(false).unwrap();
@@ -67,7 +70,7 @@ fn main() -> ! {
         Standard::Philips,
         DataFormat::Data16Channel16,
         44100u32.Hz(),
-        dma_channel.configure(
+        dma_channel.configure_for_async(
             false,
             &mut tx_descriptors,
             &mut rx_descriptors,
@@ -76,7 +79,7 @@ fn main() -> ! {
         &clocks,
     );
 
-    let mut i2s_tx = i2s
+    let i2s_tx = i2s
         .i2s_tx
         .with_bclk(io.pins.gpio17)
         .with_ws(io.pins.gpio47)
@@ -85,25 +88,24 @@ fn main() -> ! {
 
     let data = SAMPLE;
 
-    let mut buffer = tx_buffer;
+    let buffer = tx_buffer;
     let mut idx = 0;
     for i in 0..usize::min(data.len(), buffer.len()) {
         buffer[i] = data[idx];
         idx = (idx + 1) % data.len();
     }
 
-    let mut transfer = i2s_tx.write_dma_circular(&mut buffer).unwrap();
+    let mut transfer = i2s_tx.write_dma_circular_async(buffer).unwrap();
     loop {
-        if transfer.available() > 0 {
-            transfer
-                .push_with(|dma_buf| {
-                    for i in 0..dma_buf.len() {
-                        dma_buf[i] = data[idx];
-                        idx = (idx + 1) % data.len();
-                    }
-                    dma_buf.len()
-                })
-                .unwrap();
-        }
+        transfer
+            .push_with(|dma_buf| {
+                for i in 0..dma_buf.len() {
+                    dma_buf[i] = data[idx];
+                    idx = (idx + 1) % data.len();
+                }
+                dma_buf.len()
+            })
+            .await
+            .unwrap();
     }
 }
