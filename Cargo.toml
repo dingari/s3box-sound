@@ -6,11 +6,11 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-hal = { package = "esp-hal", version = "0.16.1", features = [
+hal = { package = "esp-hal", version = "0.18.0", features = [
     "embedded-hal",
     "esp32s3",
 ] }
-esp-backtrace = { version = "0.11.1", features = [
+esp-backtrace = { version = "0.12.0", features = [
     "esp32s3",
     "panic-handler",
     "exception-handler",
@@ -19,6 +19,3 @@ esp-backtrace = { version = "0.11.1", features = [
 esp-println = { version = "0.9.1", features = ["esp32s3", "uart"] }
 es8311 = { git = "https://github.com/bjoernQ/es8311-rs", default-features = false }
 embedded-hal = { version = "1.0.0" }
-
-[patch.crates-io]
-esp-hal = { git = "https://github.com/esp-rs/esp-hal", rev = "99b0c774ac3fa2a073ae6044b79014a08c81767a", package = "esp-hal" }

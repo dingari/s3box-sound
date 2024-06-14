@@ -7,22 +7,29 @@ use es8311::{Config, Resolution, SampleFreq};
 use esp_backtrace as _;
 use esp_println::println;
 use hal::{
-    clock::ClockControl, dma::{Dma, DmaPriority}, dma_circular_buffers, gpio::IO, i2c::I2C, i2s::{DataFormat, I2s, I2sWriteDma, Standard}, peripherals::Peripherals, prelude::*
+    clock::ClockControl,
+    dma::{Dma, DmaPriority},
+    dma_circular_buffers,
+    gpio::{Io, Level, Output},
+    i2c::I2C,
+    i2s::{DataFormat, I2s, I2sWriteDma, Standard},
+    peripherals::Peripherals,
+    prelude::*,
+    system::SystemControl,
 };
-use embedded_hal::digital::OutputPin;
 
 const SAMPLE: &[u8] = include_bytes!("../sample.raw");
 
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
-    let system = peripherals.SYSTEM.split();
+    let system = SystemControl::new(peripherals.SYSTEM);
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
-    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let mut pa_ctrl = io.pins.gpio46.into_push_pull_output();
-    pa_ctrl.set_high().unwrap();
+    let mut pa_ctrl = Output::new(io.pins.gpio46, Level::Low);
+    pa_ctrl.set_high();
 
     let i2c = I2C::new(
         peripherals.I2C0,
@@ -30,6 +37,7 @@ fn main() -> ! {
         io.pins.gpio18,
         100u32.kHz(),
         &clocks,
+        None,
     );
 
     let mut es8311 = es8311::Es8311::new(i2c, es8311::Address::Primary);
