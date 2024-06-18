@@ -16,9 +16,11 @@ use esp_hal::{
     system::SystemControl,
 };
 
+// This is the only 'good' value as it seems
 const NUM_SAMPLES: usize = 128;
 const NUM_CHANNELS: usize = 2;
 const DMA_BUFFER_SIZE: usize = NUM_SAMPLES * NUM_CHANNELS * core::mem::size_of::<i16>();
+const SAMPLE_RATE: f32 = 44100.0;
 
 #[main]
 async fn main(_spawner: Spawner) {
@@ -40,7 +42,7 @@ async fn main(_spawner: Spawner) {
         peripherals.I2S0,
         Standard::Philips,
         DataFormat::Data16Channel16,
-        44100u32.Hz(),
+        (SAMPLE_RATE as u32).Hz(),
         dma_channel.configure_for_async(
             false,
             &mut tx_descriptors,
@@ -62,26 +64,26 @@ async fn main(_spawner: Spawner) {
 
     let buffer = tx_buffer;
 
-    let sample_rate = 44100_f32;
     let freq = 440_f32;
     let mod_freq = 1_f32;
 
-    let mut proc = s3box_sound::SampleProcessor::new(sample_rate, freq, mod_freq);
+    let mut proc = s3box_sound::SampleProcessor::new(SAMPLE_RATE, freq, mod_freq);
 
     let mut transfer = i2s_tx.write_dma_circular_async(buffer).unwrap();
     loop {
         transfer
             .push_with(|dma_buf| {
                 let num_samples = dma_buf.len() / core::mem::size_of::<i16>();
-                let num_channels = 2;
+                let num_samples_even = num_samples - num_samples % NUM_CHANNELS;
 
-                proc.process_samples(&mut sample_buffer[0..num_samples], num_channels);
+                proc.process_samples(&mut sample_buffer[0..num_samples_even], NUM_CHANNELS);
 
-                for i in 0..dma_buf.len() {
+                let num_bytes = num_samples_even * core::mem::size_of::<i16>();
+                for i in 0..num_bytes {
                     dma_buf[i] = sample_bytes[i];
                 }
 
-                dma_buf.len()
+                num_bytes
             })
             .await
             .unwrap();
