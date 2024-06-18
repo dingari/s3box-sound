@@ -377,16 +377,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
-name = "es8311"
-version = "0.1.0"
-source = "git+https://github.com/bjoernQ/es8311-rs#5504bd56cfd1a60000c43db343ddfe26417dcbc1"
-dependencies = [
- "embedded-hal 1.0.0",
- "log",
- "strum 0.26.2",
-]
-
-[[package]]
 name = "esp-backtrace"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -440,6 +430,7 @@ dependencies = [
  "esp-synopsys-usb-otg",
  "esp32s3",
  "fugit",
+ "log",
  "nb 1.1.0",
  "paste",
  "portable-atomic",
@@ -505,6 +496,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e98f0f58453dd2ce08d99228fc8757fad39d05dfd26643665d1093b8844f42cc"
 dependencies = [
  "critical-section",
+ "log",
 ]
 
 [[package]]
@@ -680,6 +672,12 @@ name = "memchr"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
+
+[[package]]
+name = "micromath"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1db1504859397e7080588dc5b7c4ec170bdc129f371495d3dcd6165bacb6cf36"
 
 [[package]]
 name = "minijinja"
@@ -898,12 +896,12 @@ dependencies = [
  "embassy-executor",
  "embassy-time",
  "embedded-hal 1.0.0",
- "es8311",
  "esp-backtrace",
  "esp-hal",
  "esp-hal-embassy",
  "esp-println",
- "static_cell",
+ "log",
+ "micromath",
 ]
 
 [[package]]
@@ -958,15 +956,6 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
-
-[[package]]
-name = "static_cell"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d89b0684884a883431282db1e4343f34afc2ff6996fe1f4a1664519b66e14c1e"
-dependencies = [
- "portable-atomic",
-]
 
 [[package]]
 name = "strsim"

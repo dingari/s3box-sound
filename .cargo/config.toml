@@ -13,3 +13,7 @@ target = "xtensa-esp32s3-none-elf"
 
 [unstable]
 build-std = ["core"]
+
+[env]
+ESP_LOGLEVEL="INFO"
+ESPFLASH_PORT="/dev/cu.usbmodem11201"
